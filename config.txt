@@ -1,0 +1,36 @@
+{
+  "screen": {
+    "width": 41,
+    "height": 15
+  },
+  "frog": {
+    "width": 1,
+    "height": 1,
+    "color": 4,
+    "symbol": "O"
+  },
+  "cars": {
+    "max_count": 5,
+    "speed_variation": 2,
+    "types": [ "wrapping", "bouncing" ],
+    "symbols": {
+      "wrapping": "=",
+      "bouncing": "#"
+    },
+    "colors": {
+      "wrapping": 3,
+      "bouncing": 2
+    }
+  },
+  "border": {
+    "symbol": "#"
+  },
+  "lane_separator": "-",
+  "gameplay": {
+    "max_time": 60,
+    "seed": 12345
+  },
+  "meta": {
+    "meta_color": 5
+  }
+}

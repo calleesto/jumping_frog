@@ -6,13 +6,12 @@
 #define SCREEN_HEIGHT 15
 #define FROG_HEIGHT 1
 #define FROG_WIDTH 1
-#define FROG_SYMBOL 'O'
 #define FROG_COLOR 4 // 1 - YELLOW, 2 - BLUE, 3 - RED, 4 - GREEN
 #define BORDER_SYMBOL '#'
 #define LANE_SEPARATOR '-'
 #define MAX_TIME	60// in seconds
 #define MAX_CARS	5
-#define CAR_SPEED_VAR 1
+#define CAR_SPEED_VAR 2
 
 struct GameState {
 	int quit;
@@ -22,6 +21,9 @@ struct GameState {
 	char map[SCREEN_HEIGHT][SCREEN_WIDTH] = {' '};
 	int timer = 0;
 	int points = 0;
+	int radius = CAR_SPEED_VAR + 1;
+	int collisionDetected = 0; 
+	char frog_symbol = 'O';
 };
 
 struct Car {
@@ -68,7 +70,7 @@ void drawMap(struct GameState* gameState, struct Car* cars) {
 	attron(COLOR_PAIR(FROG_COLOR));
 	for (int j = 0; j < FROG_HEIGHT; j++) {
 		for (int i = 0; i < FROG_WIDTH; i++) {
-			mvaddch(gameState->frog_y + j, gameState->frog_x + i, FROG_SYMBOL);
+			mvaddch(gameState->frog_y + j, gameState->frog_x + i, gameState->frog_symbol);
 		}
 	}
 	attroff(COLOR_PAIR(FROG_COLOR));
@@ -85,7 +87,7 @@ void drawMap(struct GameState* gameState, struct Car* cars) {
 void setFrog(int y, int x, struct GameState* gameState) {
 	for (int j = 0; j < FROG_HEIGHT; j++) {
 		for (int i = 0; i < FROG_WIDTH; i++) {
-			gameState->map[y + j][x + i] = FROG_SYMBOL;
+			gameState->map[y + j][x + i] = gameState->frog_symbol;
 		}
 	}
 }
@@ -149,7 +151,7 @@ void inputDetect(struct GameState* gameState) {
 		break;
 	case 'q':
 	case 'Q':
-		break;
+		gameState->quit = 0;
 		break;
 	default:
 		break;
@@ -170,8 +172,8 @@ void ifScored(struct GameState* gameState) {
 void initializeCars(struct Car* cars) {
 	for (int i = 0; i < MAX_CARS; i++) {
 		if (!cars[i].initialized) {
-			int color_choice = (rand() % 3) + 2; // 2 3 4  
 			int speed_choice = (rand() % 3) + 1;
+			int type_choice = (rand() % 2) + 1;
 			cars[i].car_y = (i * 2) + 3;
 			if (i % 2) {
 				cars[i].car_x = 2;
@@ -181,21 +183,62 @@ void initializeCars(struct Car* cars) {
 				cars[i].car_x = SCREEN_WIDTH - 2;
 				cars[i].direction = 'l';
 			}
+			if (type_choice == 1) {
+				cars[i].type = 'w';
+				cars[i].color = 3;
+			}
+			else if (type_choice == 2) {
+				cars[i].type = 'b';
+				cars[i].color = 2;
+			}
 			cars[i].speed = speed_choice;
 			cars[i].symbol = '=';
-			cars[i].color = color_choice;
 			cars[i].initialized = 1;
+		}
+	}
+}
+
+void bounceCar(struct Car* cars, int i) {
+	if (cars[i].type == 'w') {
+		if (cars[i].car_x <= cars[i].speed) {
+			cars[i].direction = 'r';
+		}
+		else if (cars[i].car_x >= SCREEN_WIDTH - 3) {
+			cars[i].direction = 'l';
+		}
+	}
+}
+
+void wrapCar(struct Car* cars, int i) {
+	if (cars[i].type == 'b') {
+		if (cars[i].car_x <= cars[i].speed) {
+			cars[i].car_x = SCREEN_WIDTH;
+		}
+		else if (cars[i].car_x >= SCREEN_WIDTH - 3) {
+			cars[i].car_x = 0;
 		}
 	}
 }
 
 void moveCars(struct Car* cars) {
 	for (int i = 0; i < MAX_CARS; i++) {
+		bounceCar(cars, i);
+		wrapCar(cars, i);
 		if (cars[i].direction == 'r') {
 			cars[i].car_x += cars[i].speed * CAR_SPEED_VAR;
 		}
 		else if (cars[i].direction == 'l') {
 			cars[i].car_x -= cars[i].speed * CAR_SPEED_VAR;
+		}
+	}
+}
+
+void collisionDetect(struct Car* cars, struct GameState* gameState) {
+	for (int i = 0; i < MAX_CARS; i++) {
+		if (gameState->frog_x <= cars[i].car_x + gameState->radius && gameState->frog_x >= cars[i].car_x - gameState->radius && gameState->frog_y == cars[i].car_y) {
+			gameState->collisionDetected++;
+			gameState->frog_y = SCREEN_HEIGHT - 2;
+			gameState->frog_x = SCREEN_WIDTH / 2;
 		}
 	}
 }
@@ -220,11 +263,9 @@ int main() {
 		ifScored(&gameState);
 		initializeCars(cars);
 		moveCars(cars);
+		collisionDetect(cars, &gameState);
 	}
 	endwin();
 	return 0;
 
 }
-
-
-
