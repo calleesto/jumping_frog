@@ -1,36 +1,10 @@
-{
-  "screen": {
-    "width": 41,
-    "height": 15
-  },
-  "frog": {
-    "width": 1,
-    "height": 1,
-    "color": 4,
-    "symbol": "O"
-  },
-  "cars": {
-    "max_count": 5,
-    "speed_variation": 2,
-    "types": [ "wrapping", "bouncing" ],
-    "symbols": {
-      "wrapping": "=",
-      "bouncing": "#"
-    },
-    "colors": {
-      "wrapping": 3,
-      "bouncing": 2
-    }
-  },
-  "border": {
-    "symbol": "#"
-  },
-  "lane_separator": "-",
-  "gameplay": {
-    "max_time": 60,
-    "seed": 12345
-  },
-  "meta": {
-    "meta_color": 5
-  }
-}
+frog_color=4
+bouncing_car_color=3
+wrapping_car_color=2
+frog_symbol=O
+car_symbol==
+max_cars=5
+car_speed_variable=2
+border_symbol=#
+lane_separator=-
+max_time=60
