@@ -1,9 +1,9 @@
 ﻿  main.cpp
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(495,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(554,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
 LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  3 of 27 functions (11.1%) were compiled, the rest were copied from previous compilation.
-    1 functions were new in current compilation
+  3 of 30 functions (10.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   jumping_frog.vcxproj -> C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\Release\jumping_frog.exe

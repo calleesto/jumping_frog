@@ -60,6 +60,7 @@ struct GameState {
 	bool moveDown = true;
 	bool obstaclesSet = false;
 	bool frogRide = false;
+	int highscore = 0;
 };
 
 struct Car {
@@ -256,6 +257,9 @@ void inputDetect(struct GameState* gameState) {
 	case 'Q':
 		gameState->quit = 0;
 		break;
+	case KEY_BACKSPACE:
+		//clearHighscore();
+		break;
 	default:
 		break;
 	}
@@ -408,6 +412,9 @@ void collisionDetect(struct Car* cars, struct GameState* gameState) {
 	}
 }
 
+
+
+
 int readConfigFile(const char* filename, struct GameState* gameState, struct Car* cars) {
 	FILE* file = fopen(filename, "r");
 	if (!file) {
@@ -501,6 +508,43 @@ void changeOfSpeed(struct GameState* gameState, struct Car* cars) {
 	}
 }
 
+void setNewHighscore(struct GameState* gameState) {
+	if (gameState->highscore < gameState->points) {
+		gameState->highscore = gameState->points;
+	}
+}
+
+void resetVariables(struct GameState* gameState, struct Car* cars) {
+	for (int i = 0; i < SCREEN_HEIGHT; i++) {
+		for (int j = 0; j < SCREEN_WIDTH; j++) {
+			gameState->map[i][j] = ' ';
+			gameState->obstacleMap[i][j] = ' ';
+		}
+	}
+	gameState->frog_y = SCREEN_HEIGHT - 2;
+	gameState->frog_x = SCREEN_WIDTH / 2;
+	gameState->timer = 0;
+	gameState->points = 0;
+	gameState->radius = CAR_SPEED_VAR + 1;
+	gameState->collisionDetected = 0;
+	gameState->moveLeft = true;
+	gameState->moveRight = true;
+	gameState->moveUp = true;
+	gameState->moveDown = true;
+	gameState->obstaclesSet = false;
+	gameState->frogRide = false;
+	for (int i = 0; i < MAX_CARS; i++) {
+		cars[i].initialized = 0;
+	}
+}
+
+void resetGame(struct GameState* gameState, struct Car* cars) {
+	if (gameState->timer > gameState->max_time) {
+		setNewHighscore(gameState);
+		resetVariables(gameState, cars);
+	}
+}
+
 int main() {
 	struct GameState gameState;
 	struct Car cars[MAX_CARS];
@@ -510,12 +554,13 @@ int main() {
 	initscr(); cbreak(); noecho(); curs_set(0); keypad(stdscr, TRUE); nodelay(stdscr, TRUE);
 	initColors();
 	readConfigFile("config.txt", &gameState, cars);
-	while (gameState.quit && gameState.timer < gameState.max_time) {
+	while (gameState.quit) {
 		clear();
 		setFrog(gameState.frog_y, gameState.frog_x, &gameState);
 		drawMap(&gameState, cars);
-		mvprintw(0, 2, "Time: %d seconds", gameState.timer);
-		mvprintw(0, SCREEN_WIDTH - 17, "Points: %d", gameState.points);
+		mvprintw(0, 1, "Time: %d seconds", gameState.timer);
+		mvprintw(0, SCREEN_WIDTH - 20, "Points: %d", gameState.points);
+		mvprintw(0, SCREEN_WIDTH - 7, "HS: %d", gameState.highscore);
 		refresh();
 		napms(1000);
 		gameState.timer++;
@@ -527,6 +572,7 @@ int main() {
 		changeOfSpeed(&gameState, cars);
 		moveCars(cars, &gameState);
 		collisionDetect(cars, &gameState);
+		resetGame(&gameState, cars);
 	}
 	free(cars);
 	endwin();

@@ -9,4 +9,4 @@ car_symbol==
 max_cars=5
 border_symbol=#
 lane_separator=-
-max_time=60
+max_time=30
