@@ -8,14 +8,27 @@
 #define FROG_HEIGHT 1
 #define FROG_WIDTH 1
 #define CAR_SPEED_VAR 2
-#define MAX_OBSTACLES 10
-#define MAX_OBSTACLE_LENGHT 10
+#define MAX_OBSTACLES 5
+#define MAX_OBSTACLE_LENGHT 5
 #define OBSTACLE_SYMBOL '@'
 #define SPEED_CHANGE_INTERVAL 5
 
 #define MAX_CARS 5
 
+/*
+todo:
 
+-fix folder hierarchy git repo issue
+
+-fix all car bugs
+
+-make game fluid
+
+-shorten functions
+
+-game ranking (points)
+
+*/
 
 struct GameState {
 	int quit;
@@ -46,6 +59,7 @@ struct GameState {
 	bool moveUp = true;
 	bool moveDown = true;
 	bool obstaclesSet = false;
+	bool frogRide = false;
 };
 
 struct Car {
@@ -184,6 +198,10 @@ void inputDetect(struct GameState* gameState) {
 	case 'w':
 	case 'W':
 	case KEY_UP:
+		if (gameState->map[gameState->frog_y][gameState->frog_x] != OBSTACLE_SYMBOL && gameState->frogRide == true) {
+			gameState->frogRide = false;
+			break;
+		}
 		if (gameState->frog_y > 1 && gameState->moveUp) {
 			gameState->map[gameState->frog_y][gameState->frog_x] = ' ';
 			gameState->frog_y -= 1;
@@ -192,6 +210,10 @@ void inputDetect(struct GameState* gameState) {
 	case 's':
 	case 'S':
 	case KEY_DOWN:
+		if (gameState->map[gameState->frog_y][gameState->frog_x] != OBSTACLE_SYMBOL && gameState->frogRide == true) {
+			gameState->frogRide = false;
+			break;
+		}
 		if (gameState->frog_y < SCREEN_HEIGHT - FROG_HEIGHT - 1 && gameState->moveDown) {
 			gameState->map[gameState->frog_y][gameState->frog_x] = ' ';
 			gameState->frog_y += 1;
@@ -200,6 +222,10 @@ void inputDetect(struct GameState* gameState) {
 	case 'a':
 	case 'A':
 	case KEY_LEFT:
+		if (gameState->map[gameState->frog_y][gameState->frog_x] != OBSTACLE_SYMBOL && gameState->frogRide == true) {
+			gameState->frogRide = false;
+			break;
+		}
 		if (gameState->frog_x > 2 && gameState->moveLeft) {
 			gameState->map[gameState->frog_y][gameState->frog_x] = ' ';
 			gameState->frog_x -= 1;
@@ -213,6 +239,10 @@ void inputDetect(struct GameState* gameState) {
 	case 'd':
 	case 'D':
 	case KEY_RIGHT:
+		if (gameState->map[gameState->frog_y][gameState->frog_x] != OBSTACLE_SYMBOL && gameState->frogRide == true) {
+			gameState->frogRide = false;
+			break;
+		}
 		if (gameState->frog_x < SCREEN_WIDTH - FROG_WIDTH - 1 && gameState->moveRight) {
 			gameState->map[gameState->frog_y][gameState->frog_x] = ' ';
 			gameState->frog_x += 1;
@@ -326,9 +356,11 @@ void wrapCar(struct Car* cars, int i, struct GameState* gameState) {
 	}
 }
 
-void disappearCar(struct Car* cars, int i) {
+void disappearCar(struct Car* cars, int i, struct GameState* gameState) {
 	if (cars[i].type == 'd') {
 		if (cars[i].car_x - cars[i].speed * CAR_SPEED_VAR <= 0 && cars[i].direction == 'l' || cars[i].car_x + cars[i].speed * CAR_SPEED_VAR >= SCREEN_WIDTH && cars[i].direction == 'r') {
+			gameState->frogRide = false;
+			gameState->frog_x += 5;
 			cars[i].initialized = 0;
 		}
 	}
@@ -339,7 +371,7 @@ void moveCars(struct Car* cars, struct GameState* gameState) {
 		if (cars[i].stopCar == false) {
 			bounceCar(cars, i, gameState);
 			wrapCar(cars, i, gameState);
-			disappearCar(cars, i);
+			disappearCar(cars, i, gameState);
 			if (cars[i].direction == 'r') {
 				cars[i].car_x += cars[i].speed * CAR_SPEED_VAR;
 			}
@@ -352,7 +384,7 @@ void moveCars(struct Car* cars, struct GameState* gameState) {
 
 void collisionDetect(struct Car* cars, struct GameState* gameState) {
 	for (int i = 0; i < gameState->max_cars; i++) {
-		if (gameState->frog_x <= cars[i].car_x + gameState->radius && gameState->frog_x >= cars[i].car_x - gameState->radius && gameState->frog_y == cars[i].car_y) {
+		if ((gameState->frog_x <= cars[i].car_x + gameState->radius && gameState->frog_x >= cars[i].car_x - gameState->radius && gameState->frog_y == cars[i].car_y) || gameState->frogRide == true) {
 			if (cars[i].interaction == 'a') {
 				gameState->collisionDetected++;
 				gameState->frog_y = SCREEN_HEIGHT - 2;
@@ -362,6 +394,12 @@ void collisionDetect(struct Car* cars, struct GameState* gameState) {
 				if (cars[i].direction == 'l' && cars[i].car_x > gameState->frog_x || cars[i].direction == 'r' && cars[i].car_x < gameState->frog_x) {
 					cars[i].stopCar = true;
 				}
+			}
+			else if ((cars[i].interaction == 'f' && cars[i].direction == 'l' && cars[i].car_x > gameState->frog_x || cars[i].direction == 'r' && cars[i].car_x < gameState->frog_x) || gameState->frogRide == true) {
+				gameState->map[gameState->frog_y][gameState->frog_x] = ' ';
+				gameState->frogRide = true;
+				gameState->frog_x = cars[i].car_x;
+				gameState->frog_y = cars[i].car_y -1;
 			}
 		}
 		else {
