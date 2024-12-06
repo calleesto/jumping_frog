@@ -3,11 +3,12 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <math.h>
 #define SCREEN_WIDTH			41
 #define SCREEN_HEIGHT			15
 #define FROG_HEIGHT				1
 #define FROG_WIDTH				1
-#define CAR_SPEED_VAR			2
+#define CAR_SPEED_VAR			0.05
 #define MAX_OBSTACLES			5
 #define MAX_OBSTACLE_LENGHT		5
 #define OBSTACLE_SYMBOL			'@'
@@ -15,25 +16,24 @@
 #define MAX_CARS				5
 #define MAP_ELEMENTS_COLOR		1
 #define FINISH_LANE_COLOR		5
+#define TIMER_ADDITION			0.015
 
 /*
 todo:
-1. header files (bs)
+1. header files 
 
-2. function definitions (shorten functions creates more functions so ill add the funciton definitions at the end) DONE
-
-3. choose which variables go in config and which go in defines (not important)
-
-4. shorten functions [7/7] DONE
-
-5. change config funciton to use the functions shown in the instruction
-
-6. fix all car bugs 
+2. fix all car bugs 
 	-check if setFrog function is needed (if not delete function and main call)
 
-7. make game fluid
+3. create a slow down frog function 
 
-8. fix folder hierarchy git repo issue
+3. make game fluid
+
+4. fix folder hierarchy git repo issue
+	- just add another repo with two folder down
+	- use both for presentation the new one to show off project
+	- the old one to show off commit history
+	- call the new one "jumping_frog_finished"
 */
 
 
@@ -45,7 +45,7 @@ typedef struct GameState {
 	int move = 0;
 	char map[SCREEN_HEIGHT][SCREEN_WIDTH] = { ' ' };
 	char obstacleMap[SCREEN_HEIGHT][SCREEN_WIDTH] = { ' ' };
-	int timer = 0;
+	float timer = 0;
 	int points = 0;
 	int radius = CAR_SPEED_VAR + 1;
 	int collisionDetected = 0;
@@ -71,10 +71,10 @@ typedef struct GameState {
 } GameState;
 
 typedef struct Car{
-	int car_x = 0;
+	float car_x = 0.0;
 	int car_y = 0;
 	char direction = ' ';
-	int speed = 0;
+	float speed = 0.0;
 	char type = ' '; // 'w' - wrapping, 'b' - bouncing, 'd' - disappearing
 	char interaction = ' '; // 'p' - passive, 'a' - aggressive
 	char symbol = ' ';
@@ -93,7 +93,6 @@ void printFrog(GameState* gameState);
 void printCars(GameState* gameState, Car* cars);
 void printGameInfo(GameState* gameState);
 void setAndPrintVisuals(GameState* gameState, Car* cars);
-void setFrog(int y, int x, GameState* gameState);
 void initColors();
 int frogRideOff(GameState* gameState);
 void upCase(GameState* gameState);
@@ -233,20 +232,32 @@ void printFrog(GameState* gameState) {
 	attroff(COLOR_PAIR(gameState->frog_color));
 }
 
+int isAtWholeNumber(float timer) {
+	if (timer - floor(timer) >= 0.0 && timer - floor(timer) <= TIMER_ADDITION) {
+		return true;
+	}
+	return false;
+}
+
 void printCars(GameState* gameState, Car* cars) {
 	//print cars
 	for (int i = 0; i < gameState->max_cars; i++) {
 		//choose color for cars
 		attron(COLOR_PAIR(cars[i].color));
-		mvaddch(cars[i].car_y, cars[i].car_x, cars[i].symbol);
+		if (isAtWholeNumber(gameState->timer)) {
+			mvaddch(cars[i].car_y, (int)cars[i].car_x, cars[i].symbol);
+		}
+		else if (!isAtWholeNumber(gameState->timer)) {
+			mvaddch(cars[i].car_y, floor(cars[i].car_x), cars[i].symbol);
+		}
 		attroff(COLOR_PAIR(cars[i].color));
 	}
 }
 
 void printGameInfo(GameState* gameState) {
-	mvprintw(0, 1, "Time: %d seconds", gameState->timer);
-	mvprintw(0, SCREEN_WIDTH - 20, "Points: %d", gameState->points);
-	mvprintw(0, SCREEN_WIDTH - 7, "HS: %d", gameState->highscore);
+	mvprintw(0, 1, "Time: [%.2f]s", gameState->timer);
+	mvprintw(0, SCREEN_WIDTH - 20, "Points: [%d]", gameState->points);
+	mvprintw(0, SCREEN_WIDTH - 7, "HS: [%d]", gameState->highscore);
 }
 
 void setAndPrintVisuals(GameState* gameState, Car* cars) {
@@ -257,14 +268,6 @@ void setAndPrintVisuals(GameState* gameState, Car* cars) {
 	printFrog(gameState);
 	printCars(gameState, cars);
 	printGameInfo(gameState);
-}
-
-void setFrog(int y, int x, GameState* gameState) {
-	for (int j = 0; j < FROG_HEIGHT; j++) {
-		for (int i = 0; i < FROG_WIDTH; i++) {
-			gameState->map[y + j][x + i] = gameState->frog_symbol;
-		}
-	}
 }
 
 void initColors() {
@@ -567,7 +570,7 @@ void setAllMovementTrue(GameState* gameState) {
 }
 
 void changeOfSpeed(GameState* gameState, Car* cars) {
-	if ((gameState->timer % SPEED_CHANGE_INTERVAL) == 0 && gameState->timer != 0) {
+	if (((int)gameState->timer % SPEED_CHANGE_INTERVAL) == 0 && gameState->timer != 0) {
 		for (int i = 0; i < gameState->max_cars; i++) {
 			int speed_choice = (rand() % 3) + 1;
 			cars[i].speed = speed_choice;
@@ -624,8 +627,8 @@ int main() {
 		clear();
 		setAndPrintVisuals(&gameState, cars);
 		refresh();
-		napms(1000);
-		gameState.timer++;
+		napms(1);
+		gameState.timer += TIMER_ADDITION; //pretty accurate portrayal of real time
 		setAllMovementTrue(&gameState);
 		checkForObstacle(&gameState);
 		inputDetect(&gameState);
