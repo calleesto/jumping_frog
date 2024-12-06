@@ -17,17 +17,13 @@
 #define MAP_ELEMENTS_COLOR		1
 #define FINISH_LANE_COLOR		5
 #define TIMER_ADDITION			0.015
+#define DELAY_AFTER_JUMP		0.001 // 0.3 for visible delay but still playable --- no delay seems more comfortabel though
 
 /*
 todo:
 1. header files 
 
 2. fix all car bugs 
-	-check if setFrog function is needed (if not delete function and main call)
-
-3. create a slow down frog function 
-
-3. make game fluid
 
 4. fix folder hierarchy git repo issue
 	- just add another repo with two folder down
@@ -68,6 +64,12 @@ typedef struct GameState {
 	bool obstaclesSet = false;
 	bool frogRide = false;
 	int highscore = 0;
+	bool wDetected = false;
+	bool aDetected = false;
+	bool sDetected = false;
+	bool dDetected = false;
+	bool inputDetected = false;
+	float save_timer;
 } GameState;
 
 typedef struct Car{
@@ -123,7 +125,7 @@ void changeOfSpeed(GameState* gameState, Car* cars);
 void setNewHighscore(GameState* gameState);
 void resetVariables(GameState* gameState, Car* cars);
 void resetGame(GameState* gameState, Car* cars);
-
+void letAnotherDetect(GameState* gameState);
 
 void setObstacles(GameState* gameState) {
 	int rand_x;
@@ -293,57 +295,73 @@ int frogRideOff(GameState* gameState) {
 void upCase(GameState* gameState) {
 	if (gameState->frog_y > 1 && gameState->moveUp) {
 		gameState->frog_y -= 1;
+		gameState->inputDetected = true;
+		gameState->save_timer = gameState->timer;
 	}
 }
 
 void downCase(GameState* gameState) {
 	if (gameState->frog_y < SCREEN_HEIGHT - FROG_HEIGHT - 1 && gameState->moveDown) {
 		gameState->frog_y += 1;
+		gameState->inputDetected = true;
+		gameState->save_timer = gameState->timer;
 	}
 }
 
 void leftCase(GameState* gameState) {
 	if (gameState->frog_x > 2 && gameState->moveLeft) {
 		gameState->frog_x -= 1;
+		gameState->inputDetected = true;
+		gameState->save_timer = gameState->timer;
 	}
 }
 
 void rightCase(GameState* gameState) {
 	if (gameState->frog_x < SCREEN_WIDTH - FROG_WIDTH - 1 && gameState->moveRight) {
 		gameState->frog_x += 1;
+		gameState->inputDetected = true;
+		gameState->save_timer = gameState->timer;
 	}
 }
 
 void inputDetect(GameState* gameState) {
 	gameState->move = getch();
-	switch (gameState->move) {
-	case 'w':
-		if (frogRideOff(gameState)) {
+	if (gameState->inputDetected == false) {
+		switch (gameState->move) {
+		case 'w':
+			if (frogRideOff(gameState)) {
+				break;
+			}
+			upCase(gameState);
+			break;
+		case 's':
+			if (frogRideOff(gameState)) {
+				break;
+			}
+			downCase(gameState);
+			break;
+		case 'a':
+			if (frogRideOff(gameState)) {
+				break;
+			}
+			leftCase(gameState);
+			break;
+		case 'd':
+			if (frogRideOff(gameState)) {
+				break;
+			}
+			rightCase(gameState);
+			break;
+		case 'q':
+			gameState->quit = 0;
 			break;
 		}
-		upCase(gameState);
-		break;
-	case 's':
-		if (frogRideOff(gameState)) {
-			break;
-		}
-		downCase(gameState);
-		break;
-	case 'a':
-		if (frogRideOff(gameState)) {
-			break;
-		}
-		leftCase(gameState);
-		break;
-	case 'd':
-		if (frogRideOff(gameState)) {
-			break;
-		}
-		rightCase(gameState);
-		break;
-	case 'q':
-		gameState->quit = 0;
-		break;
+	}
+}
+
+void letAnotherDetect(GameState* gameState) {
+	if (gameState->timer - gameState->save_timer > DELAY_AFTER_JUMP) {
+		gameState->inputDetected = false;
 	}
 }
 
@@ -615,6 +633,10 @@ void resetGame(GameState* gameState,Car* cars) {
 	}
 }
 
+void slowDownFrog() {
+	
+}
+
 int main() {
 	GameState gameState;
 	Car cars[MAX_CARS];
@@ -632,6 +654,7 @@ int main() {
 		setAllMovementTrue(&gameState);
 		checkForObstacle(&gameState);
 		inputDetect(&gameState);
+		letAnotherDetect(&gameState);
 		ifScored(&gameState);
 		initializeCars(cars, &gameState);
 		changeOfSpeed(&gameState, cars);
