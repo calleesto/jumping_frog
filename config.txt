@@ -6,7 +6,6 @@ number_of_bounces=2
 number_of_wraps=3
 frog_symbol=O
 car_symbol==
-max_cars=5
 border_symbol=#
 lane_separator=-
 max_time=60
