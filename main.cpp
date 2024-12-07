@@ -4,6 +4,7 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 #define SCREEN_WIDTH			41
 #define SCREEN_HEIGHT			15
 #define FROG_HEIGHT				1
@@ -13,23 +14,36 @@
 #define MAX_OBSTACLE_LENGHT		5
 #define OBSTACLE_SYMBOL			'@'
 #define SPEED_CHANGE_INTERVAL	5
-#define MAX_CARS				5
+#define MAX_CARS				7
 #define MAP_ELEMENTS_COLOR		1
 #define FINISH_LANE_COLOR		5
-#define TIMER_ADDITION			0.015
+#define TIMER_ADDITION			0.015 // usually 0.015 DEPENDS ON CPU FREQUENCY
 #define DELAY_AFTER_JUMP		0.001 // 0.3 for visible delay but still playable --- no delay seems more comfortabel though
 
 /*
 todo:
-1. header files 
 
-2. fix all car bugs 
+1. fix all car bugs
+	-prawdopodobnie po prostu ify sa pochrzanione w sensie dobrze napisane ale nawiasy zle dodane DONE
+	-random tp from time to time DONE
 
-4. fix folder hierarchy git repo issue
+2. obsatcles not appearing after n DONE
+
+3. make it so that if max_cars is more than 5 then it adds more cars to the lanes where disappearing cars are and wrapping cars NOT bouncing cars
+
+CHECK ALL FUNCTIONS IF THEYRE NOT TOO LONG
+REDO FUNCTION DEFINITIONS
+ORDER FUNCTIONS AROUND
+COMMENTS WHEREVER YOU CAN
+AFTER FINISHING ADD NEW REPO FROM DIFFERENT FOLDER WITH FINISHED PROJECT
+	fix folder hierarchy git repo issue
+	DONT NEED TO USE THE REPO WITH VERSIONS IF ALL 18 POINTS NOT FINISHED
 	- just add another repo with two folder down
 	- use both for presentation the new one to show off project
 	- the old one to show off commit history
 	- call the new one "jumping_frog_finished"
+
+!!!!! odwolywac sie do dwuznacznej semantyki instrukcji
 */
 
 
@@ -43,7 +57,7 @@ typedef struct GameState {
 	char obstacleMap[SCREEN_HEIGHT][SCREEN_WIDTH] = { ' ' };
 	float timer = 0;
 	int points = 0;
-	int radius = CAR_SPEED_VAR + 1;
+	int r = CAR_SPEED_VAR + 1;
 	int collisionDetected = 0;
 	char frog_symbol = ' ';
 	char car_symbol = ' ';
@@ -62,7 +76,6 @@ typedef struct GameState {
 	bool moveUp = true;
 	bool moveDown = true;
 	bool obstaclesSet = false;
-	bool frogRide = false;
 	int highscore = 0;
 	bool wDetected = false;
 	bool aDetected = false;
@@ -70,9 +83,10 @@ typedef struct GameState {
 	bool dDetected = false;
 	bool inputDetected = false;
 	float save_timer;
-} GameState;
+	bool awaiting = false;
+} state;
 
-typedef struct Car{
+typedef struct Car {
 	float car_x = 0.0;
 	int car_y = 0;
 	char direction = ' ';
@@ -84,54 +98,55 @@ typedef struct Car{
 	int initialized = 0;// 1 - initialized, 0 - not initialized
 	int iters = 0;
 	bool stopCar = false;
+	bool frogRide = false;
 }Car;
 
-void setObstacles(GameState* gameState);
-void setBordersAndSeparators(GameState* gameState);
-void obstaclesToArray(GameState* gameState);
-void printMapArray(GameState* gameState);
-void printFinishLane(GameState* gameState);
-void printFrog(GameState* gameState);
-void printCars(GameState* gameState, Car* cars);
-void printGameInfo(GameState* gameState);
-void setAndPrintVisuals(GameState* gameState, Car* cars);
+void setObstacles(GameState* state);
+void setBordersAndSeparators(GameState* state);
+void obstaclesToArray(GameState* state);
+void printMapArray(GameState* state);
+void printFinishLane(GameState* state);
+void printFrog(GameState* state);
+void printCars(GameState* state, Car* cars);
+void printGameInfo(GameState* state);
+void setAndPrintVisuals(GameState* state, Car* cars);
 void initColors();
-int frogRideOff(GameState* gameState);
-void upCase(GameState* gameState);
-void downCase(GameState* gameState);
-void leftCase(GameState* gameState);
-void rightCase(GameState* gameState);
-void inputDetect(GameState* gameState);
-void ifScored(GameState* gameState);
+int frogRideOff(GameState* state, Car* cars);
+void upCase(GameState* state);
+void downCase(GameState* state);
+void leftCase(GameState* state);
+void rightCase(GameState* state);
+void inputDetect(GameState* state, Car* cars);
+void ifScored(GameState* state);
 void typeChoiceCase(int choice, int n, Car* cars, char symbol, int i);
 void interactionChoiceCase(int choice, int n, Car* cars, char symbol, int i, int color);
 void carDirection(int i, Car* cars);
-void initializeCars(Car* cars, GameState* gameState);
+void initializeCars(Car* cars, GameState* state);
 void changeCarAfterNumOfIters(int iterations, Car* cars, int i);
-void bounceCar(Car* cars, int i, GameState* gameState);
-void wrapCar(Car* cars, int i, GameState* gameState);
-void disappearCar(Car* cars, int i, GameState* gameState);
-void moveCars(Car* cars, GameState* gameState);
-void aggressiveCase(int i, Car* cars, GameState* gameState);
-void passiveCase(int i, Car* cars, GameState* gameState);
-void friendlyCase(int i, Car* cars, GameState* gameState);
-void collisionDetect(Car* cars, GameState* gameState);
+void bounceCar(Car* cars, int i, GameState* state);
+void wrapCar(Car* cars, int i, GameState* state);
+void disappearCar(Car* cars, int i, GameState* state);
+void moveCars(Car* cars, GameState* state);
+void aggressiveCase(int i, Car* cars, GameState* state);
+void passiveCase(int i, Car* cars, GameState* state);
+void friendlyCase(int i, Car* cars, GameState* state);
+void collisionDetect(Car* cars, GameState* state);
 void extractValue(char key[128], char value[128], const char* var_name, int* var_value_int, char* var_value_char);
-void extractValues(char key[128], char value[128], GameState* gameState);
-void readConfigFile(const char* filename, GameState* gameState);
-void checkForObstacle(GameState* gameState);
-void setAllMovementTrue(GameState* gameState);
-void changeOfSpeed(GameState* gameState, Car* cars);
-void setNewHighscore(GameState* gameState);
-void resetVariables(GameState* gameState, Car* cars);
-void resetGame(GameState* gameState, Car* cars);
-void letAnotherDetect(GameState* gameState);
+void extractValues(char key[128], char value[128], GameState* state);
+void readConfigFile(const char* filename, GameState* state);
+void checkForObstacle(GameState* state);
+void setAllMovementTrue(GameState* state);
+void changeOfSpeed(GameState* state, Car* cars);
+void setNewHighscore(GameState* state);
+void resetVariables(GameState* state, Car* cars);
+void resetGame(GameState* state, Car* cars);
+void letAnotherDetect(GameState* state);
 
-void setObstacles(GameState* gameState) {
+void setObstacles(GameState* state) {
 	int rand_x;
 	int rand_y;
 	int n;
-	if (gameState->obstaclesSet == false) {
+	if (state->obstaclesSet == false) {
 		for (int i = 0; i < MAX_OBSTACLES; i++) {
 		Repeat:
 			rand_x = (rand() % SCREEN_WIDTH) + 1;
@@ -146,27 +161,27 @@ void setObstacles(GameState* gameState) {
 				n = 3;
 			}
 			for (int i = 0; i < n; i++) {
-				if (gameState->obstacleMap[rand_y][rand_x + i] == OBSTACLE_SYMBOL) {
+				if (state->obstacleMap[rand_y][rand_x + i] == OBSTACLE_SYMBOL) {
 					goto Repeat;
 				}
-				gameState->obstacleMap[rand_y][rand_x + i] = OBSTACLE_SYMBOL;
+				state->obstacleMap[rand_y][rand_x + i] = OBSTACLE_SYMBOL;
 			}
 		}
 		for (int i = 0; i < SCREEN_HEIGHT; i++) {
-			gameState->obstacleMap[i][0] = ' ';
-			gameState->obstacleMap[i][SCREEN_WIDTH - 1] = ' ';
+			state->obstacleMap[i][0] = ' ';
+			state->obstacleMap[i][SCREEN_WIDTH - 1] = ' ';
 		}
 		for (int j = 1; j < SCREEN_HEIGHT; j += 2) {
 			for (int i = 0; i < SCREEN_WIDTH; i++) {
-				gameState->obstacleMap[j][i] = ' ';
+				state->obstacleMap[j][i] = ' ';
 
 			}
 		}
-		gameState->obstaclesSet = true;
+		state->obstaclesSet = true;
 	}
 }
 
-void setBordersAndSeparators(GameState* gameState) {
+void setBordersAndSeparators(GameState* state) {
 	//put these objects on the map array:
 	//-top border
 	//-bottom border
@@ -174,64 +189,64 @@ void setBordersAndSeparators(GameState* gameState) {
 	for (int i = 0; i < SCREEN_WIDTH; i++) {
 		for (int j = 2; j < SCREEN_HEIGHT; j++) {
 			if (j % 2 == 0) {
-				gameState->map[j][i] = gameState->lane_separator;
+				state->map[j][i] = state->lane_separator;
 			}
 		}
-		gameState->map[0][i] = gameState->border_symbol;
-		gameState->map[SCREEN_HEIGHT - 1][i] = gameState->border_symbol;
+		state->map[0][i] = state->border_symbol;
+		state->map[SCREEN_HEIGHT - 1][i] = state->border_symbol;
 	}
 	//put side borders on the map array
 	for (int i = 0; i < SCREEN_HEIGHT; i++) {
-		gameState->map[i][0] = gameState->border_symbol;
-		gameState->map[i][SCREEN_WIDTH - 1] = gameState->border_symbol;
+		state->map[i][0] = state->border_symbol;
+		state->map[i][SCREEN_WIDTH - 1] = state->border_symbol;
 	}
 }
 
-void obstaclesToArray(GameState* gameState) {
+void obstaclesToArray(GameState* state) {
 	//set obstacles and put them on the map array
-	setObstacles(gameState);
+	setObstacles(state);
 	for (int i = 0; i < SCREEN_HEIGHT; i++) {
 		for (int j = 0; j < SCREEN_WIDTH; j++) {
-			if (gameState->obstacleMap[i][j] == OBSTACLE_SYMBOL) {
-				gameState->map[i][j] = OBSTACLE_SYMBOL;
+			if (state->obstacleMap[i][j] == OBSTACLE_SYMBOL) {
+				state->map[i][j] = OBSTACLE_SYMBOL;
 			}
 		}
 	}
 }
 
-void printMapArray(GameState* gameState) {
+void printMapArray(GameState* state) {
 	//chooses color nr 1 which is yellow
 	attron(COLOR_PAIR(MAP_ELEMENTS_COLOR));
 	//print map array
 	for (int i = 0; i < SCREEN_HEIGHT; i++) {
 		for (int j = 0; j < SCREEN_WIDTH; j++) {
-			mvprintw(i, j, "%c", gameState->map[i][j]);
+			mvprintw(i, j, "%c", state->map[i][j]);
 		}
 	}
 	//color off
 	attroff(COLOR_PAIR(MAP_ELEMENTS_COLOR));
 }
 
-void printFinishLane(GameState* gameState) {
+void printFinishLane(GameState* state) {
 	//finish lane background color = red
 	attron(COLOR_PAIR(FINISH_LANE_COLOR));
 	for (int i = 1; i < SCREEN_WIDTH - 1; i++) {
-		gameState->map[1][i] = '_';
-		mvprintw(1, i, "%c", gameState->map[1][i]);
+		state->map[1][i] = '_';
+		mvprintw(1, i, "%c", state->map[1][i]);
 	}
 	attroff(COLOR_PAIR(FINISH_LANE_COLOR));
 }
 
-void printFrog(GameState* gameState) {
+void printFrog(GameState* state) {
 	//choose color for the frog
-	attron(COLOR_PAIR(gameState->frog_color));
+	attron(COLOR_PAIR(state->frog_color));
 	//print frog
 	for (int j = 0; j < FROG_HEIGHT; j++) {
 		for (int i = 0; i < FROG_WIDTH; i++) {
-			mvaddch(gameState->frog_y + j, gameState->frog_x + i, gameState->frog_symbol);
+			mvaddch(state->frog_y + j, state->frog_x + i, state->frog_symbol);
 		}
 	}
-	attroff(COLOR_PAIR(gameState->frog_color));
+	attroff(COLOR_PAIR(state->frog_color));
 }
 
 int isAtWholeNumber(float timer) {
@@ -241,35 +256,36 @@ int isAtWholeNumber(float timer) {
 	return false;
 }
 
-void printCars(GameState* gameState, Car* cars) {
+void printCars(GameState* state, Car* cars) {
 	//print cars
-	for (int i = 0; i < gameState->max_cars; i++) {
+	for (int i = 0; i < state->max_cars; i++) {
 		//choose color for cars
 		attron(COLOR_PAIR(cars[i].color));
-		if (isAtWholeNumber(gameState->timer)) {
+		if (isAtWholeNumber(state->timer)) {
 			mvaddch(cars[i].car_y, (int)cars[i].car_x, cars[i].symbol);
 		}
-		else if (!isAtWholeNumber(gameState->timer)) {
+		else if (!isAtWholeNumber(state->timer)) {
 			mvaddch(cars[i].car_y, floor(cars[i].car_x), cars[i].symbol);
 		}
 		attroff(COLOR_PAIR(cars[i].color));
 	}
 }
 
-void printGameInfo(GameState* gameState) {
-	mvprintw(0, 1, "Time: [%.2f]s", gameState->timer);
-	mvprintw(0, SCREEN_WIDTH - 20, "Points: [%d]", gameState->points);
-	mvprintw(0, SCREEN_WIDTH - 7, "HS: [%d]", gameState->highscore);
+void printGameInfo(GameState* state) {
+	mvprintw(0, 1, "Time: [%.2f]s", state->timer);
+	mvprintw(0, SCREEN_WIDTH - 20, "Points: [%d]", state->points);
+	mvprintw(0, SCREEN_WIDTH - 7, "HS: [%d]", state->highscore);
+	mvprintw(SCREEN_HEIGHT + 1, 1, "Stanislaw Swirydczuk 197896");
 }
 
-void setAndPrintVisuals(GameState* gameState, Car* cars) {
-	setBordersAndSeparators(gameState);
-	obstaclesToArray(gameState);
-	printMapArray(gameState);
-	printFinishLane(gameState);
-	printFrog(gameState);
-	printCars(gameState, cars);
-	printGameInfo(gameState);
+void setAndPrintVisuals(GameState* state, Car* cars) {
+	setBordersAndSeparators(state);
+	obstaclesToArray(state);
+	printMapArray(state);
+	printFinishLane(state);
+	printCars(state, cars);
+	printFrog(state);
+	printGameInfo(state);
 }
 
 void initColors() {
@@ -284,92 +300,121 @@ void initColors() {
 	}
 }
 
-int frogRideOff(GameState* gameState) {
-	if (gameState->map[gameState->frog_y][gameState->frog_x] != OBSTACLE_SYMBOL && gameState->frogRide == true) {
-		gameState->frogRide = false;
-		return true;
+int frogRideOff(GameState* state, Car* cars) {
+	for (int i = 0; i < MAX_CARS; i++) {
+		if (state->map[state->frog_y][state->frog_x] != OBSTACLE_SYMBOL && cars[i].frogRide == true) {
+			cars[i].frogRide = false;
+			return true;
+		}
 	}
 	return false;
 }
 
-void upCase(GameState* gameState) {
-	if (gameState->frog_y > 1 && gameState->moveUp) {
-		gameState->frog_y -= 1;
-		gameState->inputDetected = true;
-		gameState->save_timer = gameState->timer;
+void upCase(GameState* state) {
+	if (state->frog_y > 1 && state->moveUp) {
+		state->frog_y -= 1;
+		state->inputDetected = true;
+		state->save_timer = state->timer;
 	}
 }
 
-void downCase(GameState* gameState) {
-	if (gameState->frog_y < SCREEN_HEIGHT - FROG_HEIGHT - 1 && gameState->moveDown) {
-		gameState->frog_y += 1;
-		gameState->inputDetected = true;
-		gameState->save_timer = gameState->timer;
+void downCase(GameState* state) {
+	if (state->frog_y < SCREEN_HEIGHT - FROG_HEIGHT - 1 && state->moveDown) {
+		state->frog_y += 1;
+		state->inputDetected = true;
+		state->save_timer = state->timer;
 	}
 }
 
-void leftCase(GameState* gameState) {
-	if (gameState->frog_x > 2 && gameState->moveLeft) {
-		gameState->frog_x -= 1;
-		gameState->inputDetected = true;
-		gameState->save_timer = gameState->timer;
+void leftCase(GameState* state) {
+	if (state->frog_x > 2 && state->moveLeft) {
+		state->frog_x -= 1;
+		state->inputDetected = true;
+		state->save_timer = state->timer;
 	}
 }
 
-void rightCase(GameState* gameState) {
-	if (gameState->frog_x < SCREEN_WIDTH - FROG_WIDTH - 1 && gameState->moveRight) {
-		gameState->frog_x += 1;
-		gameState->inputDetected = true;
-		gameState->save_timer = gameState->timer;
+void rightCase(GameState* state) {
+	if (state->frog_x < SCREEN_WIDTH - FROG_WIDTH - 1 && state->moveRight) {
+		state->frog_x += 1;
+		state->inputDetected = true;
+		state->save_timer = state->timer;
 	}
 }
 
-void inputDetect(GameState* gameState) {
-	gameState->move = getch();
-	if (gameState->inputDetected == false) {
-		switch (gameState->move) {
+void awaitingPickUp(GameState* state) {
+	if (state->move == 32 && state->awaiting == false) {
+		state->frog_symbol = tolower(state->frog_symbol);
+		state->awaiting = true;
+	}
+	else if (state->move == 32 && state->awaiting == true) {
+		state->awaiting = false;
+		state->frog_symbol = toupper(state->frog_symbol);
+	}
+}
+
+void inputDetect(GameState* state, Car* cars) {
+	state->move = getch();
+	awaitingPickUp(state);
+	if (state->inputDetected == false && state->awaiting == false) {
+		switch (state->move) {
 		case 'w':
-			if (frogRideOff(gameState)) {
+		case 'W':
+		case KEY_UP:
+			if (frogRideOff(state, cars)) {
 				break;
 			}
-			upCase(gameState);
+			upCase(state);
 			break;
 		case 's':
-			if (frogRideOff(gameState)) {
+		case 'S':
+		case KEY_DOWN:
+			if (frogRideOff(state, cars)) {
 				break;
 			}
-			downCase(gameState);
+			downCase(state);
 			break;
 		case 'a':
-			if (frogRideOff(gameState)) {
+		case 'A':
+		case KEY_LEFT:
+			if (frogRideOff(state, cars)) {
 				break;
 			}
-			leftCase(gameState);
+			leftCase(state);
 			break;
 		case 'd':
-			if (frogRideOff(gameState)) {
+		case 'D':
+		case KEY_RIGHT:
+			if (frogRideOff(state, cars)) {
 				break;
 			}
-			rightCase(gameState);
+			rightCase(state);
 			break;
 		case 'q':
-			gameState->quit = 0;
+		case 'Q':
+		case 27:
+			state->quit = 0;
+			break;
+
+		case 'n':
+		case 'N':
+			state->timer = state->max_time + 1;
 			break;
 		}
 	}
 }
 
-void letAnotherDetect(GameState* gameState) {
-	if (gameState->timer - gameState->save_timer > DELAY_AFTER_JUMP) {
-		gameState->inputDetected = false;
+void letAnotherDetect(GameState* state) {
+	if (state->timer - state->save_timer > DELAY_AFTER_JUMP) {
+		state->inputDetected = false;
 	}
 }
 
-void ifScored(GameState* gameState) {
-	if (gameState->frog_y == 1) {
-		gameState->points++;
-		gameState->frog_y = SCREEN_HEIGHT - 2;
-		gameState->frog_x = SCREEN_WIDTH / 2;
+void ifScored(GameState* state) {
+	if (state->frog_y == 1) {
+		state->points += 10;
+		state->frog_y = SCREEN_HEIGHT - 2;
+		state->frog_x = SCREEN_WIDTH / 2;
 	}
 }
 
@@ -387,43 +432,45 @@ void interactionChoiceCase(int choice, int n, Car* cars, char symbol, int i, int
 }
 
 void carDirection(int i, Car* cars) {
-	if (i % 2) {
+	if (i % 2) { // nieparzyste go right
 		cars[i].car_x = 2;
 		cars[i].direction = 'r';
 	}
-	else if (!(i % 2)) {
+	else if (!(i % 2)) { //parzyste go left
 		cars[i].car_x = SCREEN_WIDTH - 2;
 		cars[i].direction = 'l';
 	}
 }
 
-void initializeCars(Car* cars, GameState* gameState) {
-	for (int i = 0; i < gameState->max_cars; i++) {
+void initializeCars(Car* cars, GameState* state) {
+	for (int i = 0; i < state->max_cars; i++) {
 		if (cars[i].initialized == 0) {
 
 			int speed_choice = (rand() % 3) + 1;
 			int type_choice = (rand() % 3) + 1;
 			int interaction_choice = (rand() % 3) + 1;
 
-			cars[i].car_y = (i * 2) + 3;
-
+			cars[i].car_y = ((i % 5) * 2) + 3;
+			
 			carDirection(i, cars);
 
 			typeChoiceCase(type_choice, 1, cars, 'w', i);
 			typeChoiceCase(type_choice, 2, cars, 'b', i);
 			typeChoiceCase(type_choice, 3, cars, 'd', i);
 
-			interactionChoiceCase(interaction_choice, 1, cars, 'p', i, gameState->passive_car_color);
-			interactionChoiceCase(interaction_choice, 2, cars, 'a', i, gameState->aggressive_car_color);
-			interactionChoiceCase(interaction_choice, 3, cars, 'f', i, gameState->friendly_car_color);
+			interactionChoiceCase(interaction_choice, 1, cars, 'p', i, state->passive_car_color);
+			interactionChoiceCase(interaction_choice, 2, cars, 'a', i, state->aggressive_car_color);
+			interactionChoiceCase(interaction_choice, 3, cars, 'f', i, state->friendly_car_color);
 
 			cars[i].speed = speed_choice;
-			cars[i].symbol = gameState->car_symbol;
+			cars[i].symbol = state->car_symbol;
 			cars[i].iters = 0;
 			cars[i].initialized = 1;
 		}
 	}
 }
+
+
 
 void changeCarAfterNumOfIters(int iterations, Car* cars, int i) {
 	if (cars[i].iters > iterations) {
@@ -432,52 +479,59 @@ void changeCarAfterNumOfIters(int iterations, Car* cars, int i) {
 	}
 }
 
-void bounceCar(Car* cars, int i, GameState* gameState) {
+void bounceCar(Car* cars, int i, GameState* state) {
 	if (cars[i].type == 'b') {
 		if (cars[i].car_x - cars[i].speed * CAR_SPEED_VAR <= 0) {
 			cars[i].iters++;
-			changeCarAfterNumOfIters(gameState->number_of_bounces, cars, i);
+			changeCarAfterNumOfIters(state->number_of_bounces, cars, i);
 			cars[i].direction = 'r';
 		}
 		else if (cars[i].car_x + cars[i].speed * CAR_SPEED_VAR >= SCREEN_WIDTH) {
 			cars[i].iters++;
-			changeCarAfterNumOfIters(gameState->number_of_bounces, cars, i);
+			changeCarAfterNumOfIters(state->number_of_bounces, cars, i);
 			cars[i].direction = 'l';
 		}
 	}
 }
 
-void wrapCar(Car* cars, int i, GameState* gameState) {
+void wrapCar(Car* cars, int i, GameState* state) {
 	if (cars[i].type == 'w') {
 		if (cars[i].car_x - cars[i].speed * CAR_SPEED_VAR <= 0 && cars[i].direction == 'l') {
 			cars[i].iters++;
-			changeCarAfterNumOfIters(gameState->number_of_wraps, cars, i);
+			changeCarAfterNumOfIters(state->number_of_wraps, cars, i);
 			cars[i].car_x = SCREEN_WIDTH;
 		}
 		else if (cars[i].car_x + cars[i].speed * CAR_SPEED_VAR >= SCREEN_WIDTH && cars[i].direction == 'r') {
 			cars[i].iters++;
-			changeCarAfterNumOfIters(gameState->number_of_wraps, cars, i);
+			changeCarAfterNumOfIters(state->number_of_wraps, cars, i);
 			cars[i].car_x = 0;
 		}
 	}
 }
 
-void disappearCar(Car* cars, int i, GameState* gameState) {
+void disappearCar(Car* cars, int i, GameState* state) {
 	if (cars[i].type == 'd') {
 		if (cars[i].car_x - cars[i].speed * CAR_SPEED_VAR <= 0 && cars[i].direction == 'l' || cars[i].car_x + cars[i].speed * CAR_SPEED_VAR >= SCREEN_WIDTH && cars[i].direction == 'r') {
-			gameState->frogRide = false;
-			gameState->frog_x += 5;
+			cars[i].frogRide = false;
+			if (cars[i].interaction == 'f' && cars[i].frogRide == true) {
+				if (cars[i].direction == 'r') {
+					state->frog_x -= 5;
+				}
+				else if (cars[i].direction == 'l') {
+					state->frog_x += 5;
+				}
+			}
 			cars[i].initialized = 0;
 		}
 	}
 }
 
-void moveCars(Car* cars, GameState* gameState) {
-	for (int i = 0; i < gameState->max_cars; i++) {
+void moveCars(Car* cars, GameState* state) {
+	for (int i = 0; i < state->max_cars; i++) {
 		if (cars[i].stopCar == false) {
-			bounceCar(cars, i, gameState);
-			wrapCar(cars, i, gameState);
-			disappearCar(cars, i, gameState);
+			bounceCar(cars, i, state);
+			wrapCar(cars, i, state);
+			disappearCar(cars, i, state);
 			if (cars[i].direction == 'r') {
 				cars[i].car_x += cars[i].speed * CAR_SPEED_VAR;
 			}
@@ -488,41 +542,67 @@ void moveCars(Car* cars, GameState* gameState) {
 	}
 }
 
-void aggressiveCase(int i, Car* cars, GameState* gameState) {
+void aggressiveCase(int i, Car* cars, GameState* state) {
 	if (cars[i].interaction == 'a') {
-		gameState->collisionDetected++;
-		gameState->frog_y = SCREEN_HEIGHT - 2;
-		gameState->frog_x = SCREEN_WIDTH / 2;
+		state->collisionDetected++;
+		state->points -= 5;
+		state->frog_y = SCREEN_HEIGHT - 2;
+		state->frog_x = SCREEN_WIDTH / 2;
 	}
 }
 
-void passiveCase(int i, Car* cars, GameState* gameState) {
+void passiveCase(int i, Car* cars, GameState* state) {
 	if (cars[i].interaction == 'p') {
-		if (cars[i].direction == 'l' && cars[i].car_x > gameState->frog_x || cars[i].direction == 'r' && cars[i].car_x < gameState->frog_x) {
-			cars[i].stopCar = true;
-		}
+		cars[i].stopCar = true;
 	}
 }
 
-void friendlyCase(int i, Car* cars, GameState* gameState) {
-	if ((cars[i].interaction == 'f' && cars[i].direction == 'l' && cars[i].car_x > gameState->frog_x || cars[i].direction == 'r' && cars[i].car_x < gameState->frog_x) || gameState->frogRide == true) {
-		gameState->map[gameState->frog_y][gameState->frog_x] = ' ';
-		gameState->frogRide = true;
-		gameState->frog_x = cars[i].car_x;
-		gameState->frog_y = cars[i].car_y - 1;
+void friendlyCase(int i, Car* cars, GameState* state) {
+	if (cars[i].interaction == 'f' && !state->awaiting) {
+		cars[i].stopCar = true;
+	}
+	else if (cars[i].interaction == 'f' && state->awaiting) {
+		cars[i].stopCar = false;
+		cars[i].frogRide = true;
+		state->frog_x = cars[i].car_x;
+		state->frog_y = cars[i].car_y;
 	}
 }
 
-void collisionDetect(Car* cars, GameState* gameState) {
-	for (int i = 0; i < gameState->max_cars; i++) {
-		if ((gameState->frog_x <= cars[i].car_x + gameState->radius && gameState->frog_x >= cars[i].car_x - gameState->radius && gameState->frog_y == cars[i].car_y) || gameState->frogRide == true) {
-			aggressiveCase(i, cars, gameState);
-			passiveCase(i, cars, gameState);
-			friendlyCase(i, cars, gameState);
-		}
-		else {
-			cars[i].stopCar = false;
-		}
+void hits(int i, Car* cars, GameState* state) {
+	if ((state->frog_x <= cars[i].car_x + state->r) &&
+		(state->frog_x >= cars[i].car_x - state->r) &&
+		(state->frog_y == cars[i].car_y)) {
+		aggressiveCase(i, cars, state);
+		passiveCase(i, cars, state);
+		friendlyCase(i, cars, state);
+	}
+	else if ((((cars[i].car_x <= state->frog_x + 4) &&
+		(cars[i].car_x >= state->frog_x) &&
+		(cars[i].car_y == state->frog_y)) &&
+		(cars[i].direction == 'l')) ||
+		(((cars[i].car_x >= state->frog_x - 4) &&
+			(cars[i].car_x <= state->frog_x) &&
+			(cars[i].car_y == state->frog_y)) &&
+			(cars[i].direction == 'r'))) {
+		passiveCase(i, cars, state);
+		friendlyCase(i, cars, state);
+	}
+	else if ((((state->frog_x <= cars[i].car_x + state->r) &&
+		(state->frog_x >= cars[i].car_x - state->r) &&
+		(state->frog_y == cars[i].car_y)) &&
+		(state->awaiting == true)) ||
+		(cars[i].frogRide == true)) {
+		friendlyCase(i, cars, state);
+	}
+	else {
+		cars[i].stopCar = false;
+	}
+}
+
+void collisionDetect(Car* cars, GameState* state) {
+	for (int i = 0; i < state->max_cars; i++) {
+		hits(i, cars, state);
 	}
 }
 
@@ -537,133 +617,135 @@ void extractValue(char key[128], char value[128], const char* var_name, int* var
 	}
 }
 
-void extractValues(char key[128], char value[128], GameState* gameState) {
-	extractValue(key, value, "frog_color", &gameState->frog_color, NULL);
-	extractValue(key, value, "passive_car_color", &gameState->passive_car_color, NULL);
-	extractValue(key, value, "aggressive_car_color", &gameState->aggressive_car_color, NULL);
-	extractValue(key, value, "friendly_car_color", &gameState->friendly_car_color, NULL);
-	extractValue(key, value, "number_of_bounces", &gameState->number_of_bounces, NULL);
-	extractValue(key, value, "number_of_wraps", &gameState->number_of_wraps, NULL);
-	extractValue(key, value, "frog_symbol", NULL, &gameState->frog_symbol);
-	extractValue(key, value, "car_symbol", NULL, &gameState->car_symbol);
-	extractValue(key, value, "max_cars", &gameState->max_cars, NULL);
-	extractValue(key, value, "border_symbol", NULL, &gameState->border_symbol);
-	extractValue(key, value, "lane_separator", NULL, &gameState->lane_separator);
-	extractValue(key, value, "max_time", &gameState->max_time, NULL);
+void extractValues(char key[128], char value[128], GameState* state) {
+	extractValue(key, value, "frog_color", &state->frog_color, NULL);
+	extractValue(key, value, "passive_car_color", &state->passive_car_color, NULL);
+	extractValue(key, value, "aggressive_car_color", &state->aggressive_car_color, NULL);
+	extractValue(key, value, "friendly_car_color", &state->friendly_car_color, NULL);
+	extractValue(key, value, "number_of_bounces", &state->number_of_bounces, NULL);
+	extractValue(key, value, "number_of_wraps", &state->number_of_wraps, NULL);
+	extractValue(key, value, "frog_symbol", NULL, &state->frog_symbol);
+	extractValue(key, value, "car_symbol", NULL, &state->car_symbol);
+	extractValue(key, value, "max_cars", &state->max_cars, NULL);
+	extractValue(key, value, "border_symbol", NULL, &state->border_symbol);
+	extractValue(key, value, "lane_separator", NULL, &state->lane_separator);
+	extractValue(key, value, "max_time", &state->max_time, NULL);
 }
 
-void readConfigFile(const char* filename, GameState* gameState) {
+void readConfigFile(const char* filename, GameState* state) {
 	FILE* file = fopen(filename, "r");
 
 	char line[256];
 	while (fgets(line, sizeof(line), file)) {
 		char key[128], value[128];
 		if (sscanf(line, "%[^=]=%s", key, value) == 2) {
-			extractValues(key, value, gameState);
+			extractValues(key, value, state);
 		}
 	}
 	fclose(file);
 }
 
-void checkForObstacle(GameState* gameState) {
-	if (gameState->map[gameState->frog_y - 1][gameState->frog_x] == OBSTACLE_SYMBOL) {
-		gameState->moveUp = false;
+void checkForObstacle(GameState* state) {
+	if (state->map[state->frog_y - 1][state->frog_x] == OBSTACLE_SYMBOL) {
+		state->moveUp = false;
 	}
-	if (gameState->map[gameState->frog_y + 1][gameState->frog_x] == OBSTACLE_SYMBOL) {
-		gameState->moveDown = false;
+	if (state->map[state->frog_y + 1][state->frog_x] == OBSTACLE_SYMBOL) {
+		state->moveDown = false;
 	}
-	if (gameState->map[gameState->frog_y][gameState->frog_x - 1] == OBSTACLE_SYMBOL) {
-		gameState->moveLeft = false;
+	if (state->map[state->frog_y][state->frog_x - 1] == OBSTACLE_SYMBOL) {
+		state->moveLeft = false;
 	}
-	if (gameState->map[gameState->frog_y][gameState->frog_x + 1] == OBSTACLE_SYMBOL) {
-		gameState->moveRight = false;
+	if (state->map[state->frog_y][state->frog_x + 1] == OBSTACLE_SYMBOL) {
+		state->moveRight = false;
 	}
 }
 
-void setAllMovementTrue(GameState* gameState) {
-	gameState->moveLeft = true;
-	gameState->moveRight = true;
-	gameState->moveUp = true;
-	gameState->moveDown = true;
+void setAllMovementTrue(GameState* state) {
+	state->moveLeft = true;
+	state->moveRight = true;
+	state->moveUp = true;
+	state->moveDown = true;
 }
 
-void changeOfSpeed(GameState* gameState, Car* cars) {
-	if (((int)gameState->timer % SPEED_CHANGE_INTERVAL) == 0 && gameState->timer != 0) {
-		for (int i = 0; i < gameState->max_cars; i++) {
+void changeOfSpeed(GameState* state, Car* cars) {
+	if (((int)state->timer % SPEED_CHANGE_INTERVAL) == 0 && state->timer != 0) {
+		for (int i = 0; i < state->max_cars; i++) {
 			int speed_choice = (rand() % 3) + 1;
 			cars[i].speed = speed_choice;
 		}
 	}
 }
 
-void setNewHighscore(GameState* gameState) {
-	if (gameState->highscore < gameState->points) {
-		gameState->highscore = gameState->points;
+void setNewHighscore(GameState* state) {
+	if (state->highscore < state->points) {
+		state->highscore = state->points;
 	}
 }
 
-void resetVariables(GameState* gameState, Car* cars) {
+void resetVariables(GameState* state, Car* cars) {
 	for (int i = 0; i < SCREEN_HEIGHT; i++) {
 		for (int j = 0; j < SCREEN_WIDTH; j++) {
-			gameState->map[i][j] = ' ';
-			gameState->obstacleMap[i][j] = ' ';
+			state->map[i][j] = ' ';
+			state->obstacleMap[i][j] = ' ';
 		}
 	}
-	gameState->frog_y = SCREEN_HEIGHT - 2;
-	gameState->frog_x = SCREEN_WIDTH / 2;
-	gameState->timer = 0;
-	gameState->points = 0;
-	gameState->radius = CAR_SPEED_VAR + 1;
-	gameState->collisionDetected = 0;
-	gameState->moveLeft = true;
-	gameState->moveRight = true;
-	gameState->moveUp = true;
-	gameState->moveDown = true;
-	gameState->obstaclesSet = false;
-	gameState->frogRide = false;
+	state->obstaclesSet = false;
+	state->frog_y = SCREEN_HEIGHT - 2;
+	state->frog_x = SCREEN_WIDTH / 2;
+	state->timer = 0;
+	state->points = 0;
+	state->r = CAR_SPEED_VAR + 1;
+	state->collisionDetected = 0;
+	state->moveLeft = true;
+	state->moveRight = true;
+	state->moveUp = true;
+	state->moveDown = true;
 	for (int i = 0; i < MAX_CARS; i++) {
+		cars[i].frogRide = false;
 		cars[i].initialized = 0;
 	}
 }
 
-void resetGame(GameState* gameState,Car* cars) {
-	if (gameState->timer > gameState->max_time) {
-		setNewHighscore(gameState);
-		resetVariables(gameState, cars);
+void resetGame(GameState* state, Car* cars) {
+	if (state->timer > state->max_time) {
+		setNewHighscore(state);
+		resetVariables(state, cars);
 	}
 }
 
-void slowDownFrog() {
-	
+void noNegativeScore(GameState* state) {
+	if (state->points < 0) {
+		state->points = 0;
+	}
 }
 
 int main() {
-	GameState gameState;
+	GameState state;
 	Car cars[MAX_CARS];
 	srand(time(NULL));
-	gameState.quit = 1;
+	state.quit = 1;
 	initscr(); cbreak(); noecho(); curs_set(0); keypad(stdscr, TRUE); nodelay(stdscr, TRUE);
 	initColors();
-	readConfigFile("config.txt", &gameState);
-	while (gameState.quit) {
+	readConfigFile("config.txt", &state);
+	while (state.quit) {
 		clear();
-		setAndPrintVisuals(&gameState, cars);
+		setAndPrintVisuals(&state, cars);
 		refresh();
 		napms(1);
-		gameState.timer += TIMER_ADDITION; //pretty accurate portrayal of real time
-		setAllMovementTrue(&gameState);
-		checkForObstacle(&gameState);
-		inputDetect(&gameState);
-		letAnotherDetect(&gameState);
-		ifScored(&gameState);
-		initializeCars(cars, &gameState);
-		changeOfSpeed(&gameState, cars);
-		moveCars(cars, &gameState);
-		collisionDetect(cars, &gameState);
-		resetGame(&gameState, cars);
+		state.timer += TIMER_ADDITION; //pretty accurate portrayal of real time
+		setAllMovementTrue(&state);
+		checkForObstacle(&state);
+		inputDetect(&state, cars);
+		letAnotherDetect(&state);
+		ifScored(&state);
+		initializeCars(cars, &state);
+		changeOfSpeed(&state, cars);
+		moveCars(cars, &state);
+		collisionDetect(cars, &state);
+		noNegativeScore(&state);
+		resetGame(&state, cars);
 	}
 	free(cars);
 	endwin();
 	return 0;
-
 }

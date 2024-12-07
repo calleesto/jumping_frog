@@ -1,17 +1,18 @@
 ﻿  main.cpp
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(46,29): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(253,32): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(420,20): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(482,36): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(485,36): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(511,30): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(594,20): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(616,36): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(643,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(653,36): warning C4305: '+=': truncation from 'double' to 'float'
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(60,24): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(268,32): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(401,35): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(465,20): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(536,36): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(539,36): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(567,26): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(674,20): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(697,27): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(725,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+C:\Users\Stan Swirydczuk\Desktop\STUDIA\jumping_frog\jumping_frog\jumping_frog\main.cpp(735,32): warning C4305: '+=': truncation from 'double' to 'float'
 LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  0 of 49 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+  0 of 52 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
